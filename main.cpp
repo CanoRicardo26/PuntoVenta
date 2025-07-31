@@ -34,6 +34,8 @@ void consultar_usuario();
 void Modificar_usuario();
 //
 bool validar_credenciales(int tipo_usuario);
+void Ordenar_productos(int tipo);
+void Menu_Inventario();
 
 
 int MPrincipal, MAdministrador;
@@ -151,7 +153,7 @@ void Administrador (){
                 Modificar_producto();
                 break;
             case 5:
-                Mostrar_Inventario(); // TODO: Agregar menu de ordenamiento // TODO: agregar resurtir
+                Menu_Inventario();
                 break;
             case 6:
                 Administrar_cuentas();
@@ -175,18 +177,82 @@ void Ventas(){
    cout << "Deberia mostar ventana ventas...\n";
 }
 
+void Menu_Inventario(){
+    int opcion;
+    do{
+        cout<<"\nOrdenado por:\n";
+        cout<<"1. Por Id\n";
+        cout<<"2. Por nombre\n";
+        cout<<"3. Regresar al menu anterior\n";
+        cout<<"Opcion: ";
+        cin>>opcion;
+    
+        switch(opcion){
+            case 1:
+                Ordenar_productos(1);
+                Mostrar_Inventario();
+                break;
+            case 2:
+                Ordenar_productos(2);
+                Mostrar_Inventario();
+                break;
+            case 3:
+                Ordenar_productos(1); // se ordena por id para futuros recorridos de la lista de estructuras.
+                break;
+            default:
+                cout<<"\nOpcion incorrecta\n";
+    
+        }
+    }while(opcion != 3);
+}
+
+void Ordenar_productos(int tipo){
+    Productos temp;
+    // bubble sort por id
+    if(tipo==1){
+        for (int i = 0; i < totalProductos - 1; i++) {
+            for (int j = 0; j < totalProductos - i - 1; j++) {
+                if (productos[j].id > productos[j + 1].id) {
+                    temp = productos[j];
+                    productos[j] = productos[j + 1];
+                    productos[j + 1] = temp;
+                }
+            }
+        }
+    }
+    // bubble sort por nombre
+    if(tipo==2){
+        for (int i = 0; i < totalProductos - 1; i++) {
+            for (int j = 0; j < totalProductos - i - 1; j++) {
+                if (productos[j].NProducto > productos[j + 1].NProducto) {
+                    temp = productos[j];
+                    productos[j] = productos[j + 1];
+                    productos[j + 1] = temp;
+                }
+            }
+        }
+    }
+}
 
 void Mostrar_Inventario(){
-    cout<<setw(10)<<"ID"<<setw(15)<<"Producto"<<setw(10)<<"PC"<<setw(10)<<"PV"<<setw(20)<<"Existencias"<<setw(10)<<"NR"<<endl;
-    for (int i = 0; i < totalProductos; i++)
+    char resurtir;
+    cout<<left<<setw(10)<<"ID"<<setw(15)<<"Producto"<<setw(10)<<"PC"<<setw(10)<<"PV"<<setw(20)<<"Existencias"<<setw(10)<<"NR"<<setw(5)<<"Resurtir"<<endl;
+    for (int i = 0; i < totalProductos; i++){
+        if (productos[i].Existencias <= productos[i].NivelReor){
+            resurtir = '*';
+        } else{
+            resurtir = ' ';
+        }
         if (productos[i].ProdStatus != 0){  
             cout<<setw(10)<<productos[i].id
                 <<setw(15)<<productos[i].NProducto
                 <<setw(10)<<productos[i].PrecioC
                 <<setw(10)<<productos[i].PrecioV
                 <<setw(20)<<productos[i].Existencias
-                <<setw(10)<<productos[i].NivelReor<<endl;
+                <<setw(10)<<productos[i].NivelReor
+                <<setw(5)<< resurtir << endl;
         }
+    }
 }
 
 
@@ -396,7 +462,6 @@ void Altas_Usuarios(){
     do {
         bool usuario_nuevo = true;
         string usua;
-        int i = totalUsuarios;
         cout<<"\nUsuario: ";
         cin>>usua;
         if (usua == "*" ){
@@ -421,7 +486,7 @@ void Altas_Usuarios(){
         if(usuario_nuevo){
             usuarios[totalUsuarios].NUsuario = usua;
             cout<<"Contraseña: ";
-            cin>>usuarios[i].NContra;
+            cin>>usuarios[totalUsuarios].NContra;
             cout<<"Tipo: ";
             cin>>usuarios[totalUsuarios].Tipo;
             usuarios[totalUsuarios].Status = 1;
