@@ -18,44 +18,21 @@
 
 using namespace std;
 
-void Administrador();
-void Menu_Principal();
-void Ventas();
-void Altas_Prod();
-void Altas_Usuarios();
-void Mostrar_Inventario();
-void Administrar_cuentas();
-void Mostrar_Cuentas();
-void consultar();
-void baja_producto();
-void baja_usuarios();
-void Modificar_producto();
-void consultar_usuario();
-void Modificar_usuario();
-//
-bool validar_credenciales(int tipo_usuario);
-void Ordenar_productos(int tipo);
-void Menu_Inventario();
-
-
-int MPrincipal, MAdministrador;
-string nombre, contrasena;
-// bool accesoConcedido = false; // se reemplazo por la funcion: validar_credenciales
-
-
-struct Usuario
-{
+struct Usuario{
   string NUsuario;
   string NContra;
   int Tipo;
   int Status;
 };
-int totalUsuarios=3;
-Usuario usuarios[100] = {
-  {"admin","123",1,1},
-  {"vend1","123",2,1},
-  {"vend2","123",2,1}
+
+struct Nodo{  // Nodo para almacenar los usuarios en listas enlazadas
+    Usuario usuario;
+    Nodo* siguiente;
 };
+
+Nodo* inicio = NULL;  // apuntador al inicio de la lista
+Nodo* fin = NULL;     // apuntador al final de la lista
+
 struct Productos
 {
   string id;
@@ -76,8 +53,34 @@ Productos productos [100] // en plural es mas explicito que es una lista / array
   {"5","refresco", 10.99, 14.75, 30, 8, 1}
 };
 
+void Administrador();
+void Menu_Principal();
+void Ventas();
+void Altas_Prod();
+void Altas_Usuarios();
+void Mostrar_Inventario();
+void Administrar_cuentas();
+void Mostrar_Cuentas();
+void consultar();
+void baja_producto();
+void baja_usuarios();
+void Modificar_producto();
+void consultar_usuario();
+void Modificar_usuario();
+//
+bool validar_credenciales(int tipo_usuario);
+void Ordenar_productos(int tipo);
+void Menu_Inventario();
+void Crear_lista_usuarios();
+void Agregar_usuario_lista(Usuario usuario);
+
+
+int MPrincipal, MAdministrador;
+string nombre, contrasena;
+// bool accesoConcedido = false; // se reemplazo por la funcion: validar_credenciales
 
 int main (){
+    Crear_lista_usuarios(); // se inicia la lista con los usuarios por defecto
     do{
         Menu_Principal();
     } while (MPrincipal != 3);  
@@ -89,10 +92,13 @@ bool validar_credenciales(int tipo_usuario){
     cin>>nombre;
     cout<<"Ingrese contraseña: ";
     cin>>contrasena;
-    for (int i = 0; i < totalUsuarios; ++i){
-        if (usuarios[i].NUsuario==nombre && usuarios[i].NContra==contrasena && usuarios[i].Tipo == tipo_usuario && usuarios[i].Status == 1){
+
+    Nodo* aux = inicio;
+    while(aux != NULL){
+        if(aux->usuario.NUsuario==nombre && aux->usuario.NContra==contrasena && aux->usuario.Tipo==tipo_usuario && aux->usuario.Status==1){
             return true;
         }
+        aux = aux->siguiente;
     }
     return false;
 }
@@ -436,21 +442,21 @@ void Modificar_usuario(){
             break;
         }
 
-        for (int j = 0; j < totalUsuarios; j++){
-            if (usuarios[j].NUsuario == usu && usuarios[j].Status == 1){
-                // TODO: Agregar menu?
+        Nodo* aux = inicio;
+        while(aux != NULL){
+            if(aux->usuario.NUsuario==usu && aux->usuario.Status==1){
                 cout<<"Nuevo Usuario: ";
-                cin>>usuarios[j].NUsuario;
+                cin>>aux->usuario.NUsuario;
                 cout<<"Nueva contraseña: ";
-                cin>>usuarios[j].NContra;
+                cin>>aux->usuario.NContra;
                 cout<<"Nueva Tipo: ";
-                cin>>usuarios[j].Tipo;
+                cin>>aux->usuario.Tipo;
                 cout<<"\nSe modifico el usuario con exito."<<endl;
                 usuario_encontrado = true;
                 break;
             }
+            aux = aux->siguiente;
         }
-
         if(!usuario_encontrado){
             cout<<"No se encontro el usuario. Intenta de nuevo"<<endl;
         }
@@ -468,29 +474,31 @@ void Altas_Usuarios(){
             break;
         }  
 
-        for (int j = 0; j < totalUsuarios; j++){
-            if (usuarios[j].NUsuario == usua && usuarios[j].Status == 1){
+        Nodo* aux = inicio;
+        while(aux != NULL){
+            if(aux->usuario.NUsuario==usua && aux->usuario.Status==1){
                 cout<<"\nEl usuario ya existe. Intenta de nuevo\n";
                 usuario_nuevo = false;
                 break;
-            }  
-            
-            if (usuarios[j].NUsuario == usua && usuarios[j].Status == 0){
-                usuarios[j].Status = 1;
+            }
+            if (aux->usuario.NUsuario == usua && aux->usuario.Status == 0){
+                aux->usuario.Status = 1;
                 cout<<"\nUsuario vuelto a dar de alta \n";
                 usuario_nuevo = false;
                 break;
             }
+            aux = aux->siguiente;
         }
 
         if(usuario_nuevo){
-            usuarios[totalUsuarios].NUsuario = usua;
+            Usuario NUsuario;
+            NUsuario.NUsuario = usua;
             cout<<"Contraseña: ";
-            cin>>usuarios[totalUsuarios].NContra;
+            cin>>NUsuario.NContra;
             cout<<"Tipo: ";
-            cin>>usuarios[totalUsuarios].Tipo;
-            usuarios[totalUsuarios].Status = 1;
-            totalUsuarios++;
+            cin>>NUsuario.Tipo;
+            NUsuario.Status = 1;
+            Agregar_usuario_lista(NUsuario);
             Mostrar_Cuentas();
         }
     } while (true);
@@ -499,10 +507,12 @@ void Altas_Usuarios(){
 
 void Mostrar_Cuentas(){
     cout<<setw(10)<<"Usuario"<<setw(15)<<"Contraseña"<<setw(10)<<"Tipo"<<setw(10)<<"Status"<<endl;
-    for (int i = 0; i < totalUsuarios; i++){
-        if (usuarios[i].Status != 0){
-            cout<<setw(10)<<usuarios[i].NUsuario<<setw(15)<<usuarios[i].NContra<<setw(10)<<usuarios[i].Tipo<<setw(10)<<usuarios[i].Status<<endl;
+    Nodo* aux = inicio;
+    while(aux != NULL){
+        if(aux->usuario.Status==1){
+            cout<<setw(10)<<aux->usuario.NUsuario<<setw(15)<<aux->usuario.NContra<<setw(10)<<aux->usuario.Tipo<<setw(10)<<aux->usuario.Status<<endl;
         }
+        aux = aux->siguiente;
     }
 }
 
@@ -556,13 +566,15 @@ void consultar_usuario(){
             break;
         }
 
-        for (int i = 0; i < totalUsuarios; i++){
-            if (usuarios[i].NUsuario == usu && usuarios[i].Status == 1){
+        Nodo* aux = inicio;
+        while(aux != NULL){
+            if(aux->usuario.NUsuario==usu && aux->usuario.Status==1){
                 cout<<setw(10)<<"Usuario"<<setw(15)<<"Contraseña"<<setw(10)<<"Tipo"<<setw(10)<<"Status"<<endl;
-                cout<<setw(10)<<usuarios[i].NUsuario<<setw(15)<<usuarios[i].NContra<<setw(10)<<usuarios[i].Tipo<<setw(10)<<usuarios[i].Status<<endl;
+                cout<<setw(10)<<aux->usuario.NUsuario<<setw(15)<<aux->usuario.NContra<<setw(10)<<aux->usuario.Tipo<<setw(10)<<aux->usuario.Status<<endl;
                 usuario_encontrado = true;
                 break;
             }
+            aux = aux->siguiente;
         }
 
         if(!usuario_encontrado){
@@ -612,18 +624,47 @@ void baja_usuarios(){
         cin>>usu;
         if (usu == "*" ){
             break;
-        }    
-        
-        for (int i = 0; i < totalUsuarios; i++){
-            if (usuarios[i].NUsuario == usu && usuarios[i].Status == 1){
-                usuarios[i].Status = 0;
+        }
+
+        Nodo* aux = inicio;
+        while(aux != NULL){
+            if(aux->usuario.NUsuario==usu && aux->usuario.Status==1){
+                aux->usuario.Status = 0;
                 cout<<"Usuario dado de baja con exito \n";
                 usuario_encontrado = true;
                 break;
-            } 
+            }
+            aux = aux->siguiente;
         }
+        
         if(!usuario_encontrado){
             cout<<"Usuario no encontrado"<<endl;
         }
     }while (true);
+}
+
+void Agregar_usuario_lista(Usuario usuario){
+    Nodo* nodo = new(Nodo); // se crea nuevo nodo para almacenar al nuevo usuario
+    nodo->usuario = usuario; // se asigna el nuevo usuario al nodo
+
+    if(inicio == NULL){
+        inicio = nodo; // si esta vacia la lista, se inicializa con el primer nodo
+    }else{
+        fin->siguiente = nodo; // si no esta vacia, se enlaza el ultimo nodo al nuevo que creamos
+    }
+
+    nodo->siguiente = NULL; // el ultimo nodo siempre apunta a NULL
+    fin = nodo; // se mueve el apuntador fin al ultimo nodo creado
+}
+
+void Crear_lista_usuarios(){  // funcion para crear la lista con los usuarios por defecto
+    int totalUsuarios = 3;
+    Usuario usuarios[3] = {
+        {"admin","123",1,1},
+        {"vend1","123",2,1},
+        {"vend2","123",2,1}
+    };
+    for(int i=0; i < totalUsuarios; i++){
+            Agregar_usuario_lista(usuarios[i]);
+        }
 }
