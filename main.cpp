@@ -279,7 +279,7 @@ void Administrar_cuentas(){
                 consultar_usuario();
                 break;
             case 4:
-                Modificar_usuario(); // TODO: Validar que funcione
+                Modificar_usuario();
                 break;
             case 5:
                 Mostrar_Cuentas();
@@ -517,15 +517,22 @@ void consultar(){
             break;
         }
 
+        char resurtir;
         for (int i = 0; i < totalProductos; i++){
             if (productos[i].NProducto == prod_temp && productos[i].ProdStatus == 1){
-                cout<<setw(10)<<"ID"<<setw(15)<<"Producto"<<setw(10)<<"PC"<<setw(10)<<"PV"<<setw(20)<<"Existencias"<<setw(10)<<"NR"<<endl;
+                cout<<setw(10)<<"ID"<<setw(15)<<"Producto"<<setw(10)<<"PC"<<setw(10)<<"PV"<<setw(20)<<"Existencias"<<setw(10)<<"NR"<<setw(5)<<"Resurtir"<<endl;
+                if (productos[i].Existencias <= productos[i].NivelReor){
+                    resurtir = '*';
+                } else{
+                    resurtir = ' ';
+                }
                 cout<<setw(10)<<productos[i].id
                     <<setw(15)<<productos[i].NProducto
                     <<setw(10)<<productos[i].PrecioC
                     <<setw(10)<<productos[i].PrecioV
                     <<setw(20)<<productos[i].Existencias
-                    <<setw(10)<<productos[i].NivelReor<<endl;
+                    <<setw(10)<<productos[i].NivelReor
+                    <<setw(5)<< resurtir << endl;
                 producto_encontrado = true;
                 break;
             } 
