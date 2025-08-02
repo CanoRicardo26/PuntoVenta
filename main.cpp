@@ -43,15 +43,8 @@ struct Productos
   int NivelReor;
   int ProdStatus;
 };
-int totalProductos = 5;
-Productos productos [100] // en plural es mas explicito que es una lista / array
-{
-  {"1","agua", 13.39, 18.55, 12, 4, 1},
-  {"2","leche", 12.35, 15.50, 16, 5, 1},
-  {"3","huevos", 22.40, 30.39, 20, 7, 1},
-  {"4","pan", 5.50, 7.95, 18, 6, 1},
-  {"5","refresco", 10.99, 14.75, 30, 8, 1}
-};
+int totalProductos = 0;
+Productos productos [100]; // en plural es mas explicito que es una lista / array
 
 void Administrador();
 void Menu_Principal();
@@ -73,13 +66,17 @@ void Ordenar_productos(int tipo);
 void Menu_Inventario();
 void Crear_lista_usuarios();
 void Agregar_usuario_lista(Usuario usuario);
-
+void Escribir_archivo_productos();
+void Actualizar_arreglo_productos(bool agregar_productos_base);
 
 int MPrincipal, MAdministrador;
 string nombre, contrasena;
 // bool accesoConcedido = false; // se reemplazo por la funcion: validar_credenciales
 
-int main (){
+int main (){ 
+    Actualizar_arreglo_productos(false); // true = si actualizar productos base (solo la primera vez que se ejecuta) | false = leer los productos del archivo.
+    Escribir_archivo_productos(); // solo se ejecuta la primera vez cuando se quiero empezar con los productos por default.
+
     Crear_lista_usuarios(); // se inicia la lista con los usuarios por defecto
     do{
         Menu_Principal();
@@ -318,10 +315,11 @@ void Altas_Prod (){
                 producto_nuevo = false;
                 break; // con 'break' nos salimos del for y se inicia de nuevo el ciclo do while. No es necesario volver a mandar a la funcion Altar_Prod().
             }  
-            if (productos[j].NProducto == prod_temp && productos[j].ProdStatus == 0){
+            if (productos[j].NProducto == prod_temp && productos[j].ProdStatus == 0){ // Esta condicion no se cumple porque se actualiza el archivo solo con los productos activos
                 productos[j].ProdStatus = 1;
                 cout<<"\nProducto vuelto a dar de alta \n";
-                // Altas_Prod ();
+                Escribir_archivo_productos(); // se actualiza el archivo productos
+                Actualizar_arreglo_productos(false);
                 producto_nuevo = false;
                 break;
             }
@@ -360,6 +358,8 @@ void Altas_Prod (){
 
             productos[totalProductos].ProdStatus = 1;
             totalProductos++;
+            Escribir_archivo_productos(); // se actualiza el archivo productos
+            Actualizar_arreglo_productos(false);
             Mostrar_Inventario();
         }
     } while (true);
@@ -369,7 +369,7 @@ void Altas_Prod (){
 void Modificar_producto(){
     do{
         int indice, opcion;
-        bool producto_encontrado = false;
+        bool producto_encontrado = false, producto_modificado = false;
         string prod_temp;
         cout<<"\nProducto a modificar: ";
         cin>>prod_temp;
@@ -378,9 +378,9 @@ void Modificar_producto(){
             break;
         }
 
-        for (int j = 0; j < totalProductos; j++){
+        for (int j = 0; j < totalProductos; j++){ 
             if (productos[j].NProducto == prod_temp && productos[j].ProdStatus == 1){
-                indice = j;
+                indice = j;  // guardamos la posicion del producto para despues acceder a ella
                 producto_encontrado = true;
                 break;
             }  
@@ -402,23 +402,31 @@ void Modificar_producto(){
                         cout<<"\nNuevo Precio compra: ";
                         cin>>productos[indice].PrecioC;
                         cout<<"\nPrecio de compra actualizado\n";
+                        producto_modificado = true;
                         break;
                     case 2:
                         cout<<"\nNuevo Precio venta: ";
                         cin>>productos[indice].PrecioV;
                         cout<<"\nPrecio de venta actualizado\n";
+                        producto_modificado = true;
                         break;
                     case 3:
                         cout<<"\nNuevo Existencias: ";
                         cin>>productos[indice].Existencias;
                         cout<<"\nExistencias actualizadas\n";
+                        producto_modificado = true;
                         break;
                     case 4:
                         cout<<"\nNuevo Nivel de reorden: ";
                         cin>>productos[indice].NivelReor;
                         cout<<"\nNivel de reorden actualizado\n";
+                        producto_modificado = true;
                         break;
                     case 5:
+                        if(producto_modificado){
+                            Escribir_archivo_productos(); // se actualiza el archivo productos
+                            Actualizar_arreglo_productos(false);
+                        }
                         break; // se regresa al menu anterior
                     default:
                         cout<<"\nOpcion incorrecta.\n";
@@ -600,6 +608,8 @@ void baja_producto(){
                 cout<<"\nProducto dado de baja con exito \n";
                 // baja_producto();
                 producto_encontrado = true;
+                Escribir_archivo_productos(); // se actualiza el archivo productos
+                Actualizar_arreglo_productos(false);
                 break; // con el break es suficiente porque tienes un do while. El break rompe el for y regresa al while.
             }  
             if (productos[i].NProducto == Prod && productos[i].ProdStatus == 0){
@@ -667,4 +677,53 @@ void Crear_lista_usuarios(){  // funcion para crear la lista con los usuarios po
     for(int i=0; i < totalUsuarios; i++){
             Agregar_usuario_lista(usuarios[i]);
         }
+}
+
+// TODO: falta hacer validaciones
+void Escribir_archivo_productos(){ 
+    fstream archivo("productos.bin", ios::binary | ios::out);
+    if(!archivo){
+        cout<<"Error en la apertura del archivo";
+    } else {
+        //escritura en el archivo 
+        for(int j=0; j<totalProductos; j++){
+            if(productos[j].ProdStatus==1){
+                archivo.write(reinterpret_cast<char *>(&productos[j]),sizeof(Productos));
+            }
+        }
+    }
+    archivo.close();
+}
+
+void Actualizar_arreglo_productos(bool agregar_productos_base){
+    Productos productos_base[5] = {
+        {"1","agua", 13.39, 18.55, 12, 4, 1},
+        {"2","leche", 12.35, 15.50, 16, 5, 1},
+        {"3","huevos", 22.40, 30.39, 20, 7, 1},
+        {"4","pan", 5.50, 7.95, 18, 6, 1},
+        {"5","refresco", 10.99, 14.75, 30, 8, 1}
+    };
+
+    if(agregar_productos_base){
+        for(int i=0; i<5; i++){
+            productos[i]=productos_base[i];
+            totalProductos++;
+        }
+    } else {
+        fstream archivo("productos.bin",ios::in | ios::binary); // lectura del archivo
+        if(!archivo) 
+            cout<<"Error en la apertura del archivo"; 
+        else{ 
+            // lectura adelantada
+            totalProductos = 0; // se vuelve a poner en cero para actualizar todo el arreglo de estructuras de productos.
+            Productos producto;
+            archivo.read(reinterpret_cast<char *>(&producto),sizeof(Productos));
+            while(archivo.eof()==false){ 
+                productos[totalProductos]=producto;
+                totalProductos++;
+                archivo.read(reinterpret_cast<char *>(&producto),sizeof(Productos));
+            } 
+            archivo.close(); 
+        }
+    }
 }
