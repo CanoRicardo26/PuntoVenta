@@ -69,13 +69,13 @@ void baja_usuarios();
 void Modificar_producto();
 void consultar_usuario();
 void Modificar_usuario();
-//
+void Corte_General();
 bool validar_credenciales(int tipo_usuario);
 void Ordenar_productos(int tipo);
 void Menu_Inventario();
 void Crear_lista_usuarios();
 void Agregar_usuario_lista(Usuario usuario);
-//
+// archivos
 void Escribir_archivo_productos();
 void Actualizar_arreglo_productos(bool agregar_productos_base);
 void Escribir_archivo_usuarios();
@@ -86,10 +86,10 @@ string nombre, contrasena;
 // bool accesoConcedido = false; // se reemplazo por la funcion: validar_credenciales
 
 int main (){ 
-    Actualizar_lista_usuarios(false); // true = actualizar usuarios base (solo la primera vez que se ejecuta) | false = leer los usuarios del archivo.
+    Actualizar_lista_usuarios(true); // true = actualizar usuarios base (solo la primera vez que se ejecuta) | false = leer los usuarios del archivo.
     Escribir_archivo_usuarios();
 
-    Actualizar_arreglo_productos(false); // true = actualizar productos base (solo la primera vez que se ejecuta) | false = leer los productos del archivo.
+    Actualizar_arreglo_productos(true); // true = actualizar productos base (solo la primera vez que se ejecuta) | false = leer los productos del archivo.
     Escribir_archivo_productos();
 
     do{
@@ -176,7 +176,7 @@ void Administrador (){
                 Administrar_cuentas();
                 break;
             case 7:
-                // TODO: Crear funcion de corte de caja
+                Corte_General();
                 break;
             case 8:
                 // ir al Menu_Principal
@@ -194,7 +194,7 @@ void Ventas(){
     Venta venta_temp;
     string prod_temp;
     int cantidad, total_ventas_temp = 0;
-    float ingresos, egresos;
+    float ingresos=0, egresos=0;
     char respuesta;
     do{
         bool producto_encontrado = false;
@@ -203,7 +203,7 @@ void Ventas(){
 
         if(prod_temp=="**"){
             Escribir_archivo_productos(); // se actualiza el archivo de productos (existencias)
-            cout<<"Corte de caja vendedor:\n";
+            cout<<"\nCorte de caja vendedor:\n";
             for(int i=0; i < total_ventas_temp; i++){
                 for(int j=0; j < venta_temp_vendedor[i].ProductosVendidos; j++){
                     ingresos += venta_temp_vendedor[i].PrecioV[j] * venta_temp_vendedor[i].cantidad[j];
@@ -212,7 +212,7 @@ void Ventas(){
             }
             cout << "Ingresos: $" << ingresos << endl;
             cout << "Egresos: $" << egresos << endl;
-            cout << "\nUtilidad: $" << ingresos - egresos << endl;
+            cout << "Utilidad: $" << ingresos - egresos << endl;
             break;
         }
 
@@ -864,4 +864,18 @@ void Actualizar_lista_usuarios(bool agregar_usuarios_base){
             archivo.close(); 
         }
     }
+}
+
+void Corte_General(){
+    float ingresos=0, egresos=0;
+    cout<<"\nCorte de caja general:\n";
+    for(int i=0; i < totalVentas; i++){
+        for(int j=0; j < ventas[i].ProductosVendidos; j++){
+            ingresos += ventas[i].PrecioV[j] * ventas[i].cantidad[j];
+            egresos += ventas[i].PrecioC[j] * ventas[i].cantidad[j];
+        }
+    }
+    cout << "Ingresos: $" << ingresos << endl;
+    cout << "Egresos: $" << egresos << endl;
+    cout << "Utilidad: $" << ingresos - egresos << endl;
 }
