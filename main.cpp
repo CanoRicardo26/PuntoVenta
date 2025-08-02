@@ -33,8 +33,7 @@ struct Nodo{  // Nodo para almacenar los usuarios en listas enlazadas
 Nodo* inicio = NULL;  // apuntador al inicio de la lista
 Nodo* fin = NULL;     // apuntador al final de la lista
 
-struct Productos
-{
+struct Productos{
   string id;
   string NProducto;
   float PrecioC;
@@ -45,6 +44,16 @@ struct Productos
 };
 int totalProductos = 0;
 Productos productos [100]; // en plural es mas explicito que es una lista / array
+
+struct Venta{
+    string productos[100];
+    int cantidad[100];
+    float PrecioC[100];
+    float PrecioV[100];
+    int ProductosVendidos = 0; // guarda cuantos productos se vendieron por cliente / venta. Sirve para llevar el indice de los arreglos
+};
+int totalVentas = 0;
+Venta ventas[100];
 
 void Administrador();
 void Menu_Principal();
@@ -170,7 +179,7 @@ void Administrador (){
                 // TODO: Crear funcion de corte de caja
                 break;
             case 8:
-                // Menu_Principal();
+                // ir al Menu_Principal
                 break;
             default:
                 cout<<"Opcion incorrecta. Intente de nuevo"<<endl;
@@ -181,8 +190,91 @@ void Administrador (){
 
 
 void Ventas(){
-   // TODO: Crear funcion de Ventas
-   cout << "Deberia mostar ventana ventas...\n";
+    Venta venta_temp_vendedor[100]; // para mostrar el corte de caja por vendedor
+    Venta venta_temp;
+    string prod_temp;
+    int cantidad, total_ventas_temp = 0;
+    float ingresos, egresos;
+    char respuesta;
+    do{
+        bool producto_encontrado = false;
+        cout<<"\nProducto: ";
+        cin>>prod_temp;
+
+        if(prod_temp=="**"){
+            Escribir_archivo_productos(); // se actualiza el archivo de productos (existencias)
+            cout<<"Corte de caja vendedor:\n";
+            for(int i=0; i < total_ventas_temp; i++){
+                for(int j=0; j < venta_temp_vendedor[i].ProductosVendidos; j++){
+                    ingresos += venta_temp_vendedor[i].PrecioV[j] * venta_temp_vendedor[i].cantidad[j];
+                    egresos += venta_temp_vendedor[i].PrecioC[j] * venta_temp_vendedor[i].cantidad[j];
+                }
+            }
+            cout << "Ingresos: $" << ingresos << endl;
+            cout << "Egresos: $" << egresos << endl;
+            cout << "\nUtilidad: $" << ingresos - egresos << endl;
+            break;
+        }
+
+        if(prod_temp=="*"){
+            ventas[totalVentas] = venta_temp; // se agrega la venta a la lista de estructura
+            totalVentas++; // se incrementa el contador de las ventas
+            // se hace lo mismo para las ventas temp (para usar en el corte de caja por vendedor)
+            venta_temp_vendedor[total_ventas_temp] = venta_temp;
+            total_ventas_temp++;
+
+            cout<<"\nTicket:\n";
+            cout << left<<setw(15)<<"Producto"<<setw(12)<<"Cantidad"<<setw(20)<<"Precio Unitario"<<"Subtotal"<<endl;
+            for(int i=0; i<venta_temp.ProductosVendidos; i++){
+                float subtotal = venta_temp.cantidad[i] * venta_temp.PrecioV[i];
+                cout<<left<<setw(15)<<venta_temp.productos[i]<<setw(12)<<venta_temp.cantidad[i]<<setw(20)<<venta_temp.PrecioV[i]<<subtotal<<endl;
+            }
+            // se resetean los valores de la venta_temp para el siguiente cliente
+            for (int i = 0; i < venta_temp.ProductosVendidos; i++) {
+                venta_temp.productos[i] = "";
+                venta_temp.cantidad[i] = 0;
+                venta_temp.PrecioC[i] = 0;
+                venta_temp.PrecioV[i] = 0;
+            }
+            venta_temp.ProductosVendidos=0;
+        } else {
+            for (int j = 0; j < totalProductos; j++){ // buscar producto
+                if (productos[j].NProducto == prod_temp && productos[j].ProdStatus == 1){
+                    producto_encontrado = true;
+                    if(productos[j].Existencias==0){ // si no hay existencias se sale del ciclo.
+                        cout<<"\nNo hay existencia\n";
+                        break;
+                    }
+                    // pedimos la cantidad
+                    cout<<"Cantidad: ";
+                    cin>>cantidad;
+                    if(productos[j].Existencias < cantidad){
+                        cout<<"No hay "<<cantidad<<", solo hay "<<productos[j].Existencias<<", ¿realizar la venta de "<<productos[j].Existencias<<"? (s/n): ";
+                        cin>>respuesta;
+                        if(respuesta=='s'){
+                            cantidad = productos[j].Existencias;
+                            cout<<"Se agrego la cantidad: "<<cantidad<<endl;
+                        } else{
+                            cout<<"Producto no agregado"<<endl;
+                            break;
+                        }
+                    }
+                    // se agrega a la venta temporal
+                    venta_temp.productos[venta_temp.ProductosVendidos] = prod_temp;
+                    venta_temp.cantidad[venta_temp.ProductosVendidos] = cantidad;
+                    venta_temp.PrecioC[venta_temp.ProductosVendidos] = productos[j].PrecioC;
+                    venta_temp.PrecioV[venta_temp.ProductosVendidos] = productos[j].PrecioV;
+                    venta_temp.ProductosVendidos++;
+
+                    productos[j].Existencias -= cantidad; // se resta del inventario
+                    break;
+                }
+            }
+            if(!producto_encontrado){
+                cout<<"\nNo se encontro el producto. Intenta de nuevo.\n";
+            }
+        }
+    }while(true);
 }
 
 void Menu_Inventario(){
