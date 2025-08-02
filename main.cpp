@@ -66,18 +66,23 @@ void Ordenar_productos(int tipo);
 void Menu_Inventario();
 void Crear_lista_usuarios();
 void Agregar_usuario_lista(Usuario usuario);
+//
 void Escribir_archivo_productos();
 void Actualizar_arreglo_productos(bool agregar_productos_base);
+void Escribir_archivo_usuarios();
+void Actualizar_lista_usuarios(bool agregar_usuarios_base);
 
 int MPrincipal, MAdministrador;
 string nombre, contrasena;
 // bool accesoConcedido = false; // se reemplazo por la funcion: validar_credenciales
 
 int main (){ 
-    Actualizar_arreglo_productos(false); // true = si actualizar productos base (solo la primera vez que se ejecuta) | false = leer los productos del archivo.
-    Escribir_archivo_productos(); // solo se ejecuta la primera vez cuando se quiero empezar con los productos por default.
+    Actualizar_lista_usuarios(false); // true = actualizar usuarios base (solo la primera vez que se ejecuta) | false = leer los usuarios del archivo.
+    Escribir_archivo_usuarios();
 
-    Crear_lista_usuarios(); // se inicia la lista con los usuarios por defecto
+    Actualizar_arreglo_productos(false); // true = actualizar productos base (solo la primera vez que se ejecuta) | false = leer los productos del archivo.
+    Escribir_archivo_productos();
+
     do{
         Menu_Principal();
     } while (MPrincipal != 3);  
@@ -460,6 +465,7 @@ void Modificar_usuario(){
                 cout<<"Nueva Tipo: ";
                 cin>>aux->usuario.Tipo;
                 cout<<"\nSe modifico el usuario con exito."<<endl;
+                Escribir_archivo_usuarios();
                 usuario_encontrado = true;
                 break;
             }
@@ -507,6 +513,7 @@ void Altas_Usuarios(){
             cin>>NUsuario.Tipo;
             NUsuario.Status = 1;
             Agregar_usuario_lista(NUsuario);
+            Escribir_archivo_usuarios();
             Mostrar_Cuentas();
         }
     } while (true);
@@ -640,6 +647,7 @@ void baja_usuarios(){
         while(aux != NULL){
             if(aux->usuario.NUsuario==usu && aux->usuario.Status==1){
                 aux->usuario.Status = 0;
+                Escribir_archivo_usuarios();
                 cout<<"Usuario dado de baja con exito \n";
                 usuario_encontrado = true;
                 break;
@@ -679,7 +687,7 @@ void Crear_lista_usuarios(){  // funcion para crear la lista con los usuarios po
         }
 }
 
-// TODO: falta hacer validaciones
+
 void Escribir_archivo_productos(){ 
     fstream archivo("productos.bin", ios::binary | ios::out);
     if(!archivo){
@@ -722,6 +730,44 @@ void Actualizar_arreglo_productos(bool agregar_productos_base){
                 productos[totalProductos]=producto;
                 totalProductos++;
                 archivo.read(reinterpret_cast<char *>(&producto),sizeof(Productos));
+            } 
+            archivo.close(); 
+        }
+    }
+}
+
+void Escribir_archivo_usuarios(){
+    fstream archivo("usuarios.bin", ios::binary | ios::out);
+    if(!archivo){
+        cout<<"Error en la apertura del archivo";
+    } else {
+        //escritura en el archivo 
+        Nodo* aux = inicio;
+        while(aux != NULL){
+            if(aux->usuario.Status==1){
+                archivo.write(reinterpret_cast<char *>(&aux->usuario),sizeof(Usuario));
+            }
+            aux = aux->siguiente;
+        }
+    }
+    archivo.close();
+}
+
+
+void Actualizar_lista_usuarios(bool agregar_usuarios_base){
+    if(agregar_usuarios_base){
+        Crear_lista_usuarios(); // se inicia la lista con los usuarios por defecto
+    } else {
+        fstream archivo("usuarios.bin",ios::in | ios::binary); // lectura del archivo
+        if(!archivo) 
+            cout<<"Error en la apertura del archivo"; 
+        else{ 
+            // lectura adelantada
+            Usuario usuario;
+            archivo.read(reinterpret_cast<char *>(&usuario),sizeof(Usuario));
+            while(archivo.eof()==false){ 
+                Agregar_usuario_lista(usuario);
+                archivo.read(reinterpret_cast<char *>(&usuario),sizeof(Usuario));
             } 
             archivo.close(); 
         }
